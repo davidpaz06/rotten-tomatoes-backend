@@ -1,4 +1,4 @@
-import { createServer, proxy } from 'aws-serverless-express';
+import { createServer } from 'aws-serverless-express';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import express from 'express';
 import { NestFactory } from '@nestjs/core';
@@ -8,8 +8,8 @@ import serverlessExpress from '@vendia/serverless-express';
 
 const expressApp = express();
 let server: Server | undefined;
+let seHandler: ((event: any, context: any) => Promise<any>) | undefined;
 
-// filepath: /.../api/index.ts
 async function bootstrapServer(): Promise<Server> {
   if (!server) {
     console.log('Inicializando NestJS...');
@@ -26,19 +26,35 @@ async function bootstrapServer(): Promise<Server> {
   return server;
 }
 
-function sanitizeEvent(event: any) {
+interface Event {
+  requestContext?: {
+    connectionContext?: any;
+  };
+}
+
+function sanitizeEvent(event: Event) {
   if (event && event.requestContext && event.requestContext.connectionContext) {
     delete event.requestContext.connectionContext;
   }
   return event;
 }
 
+async function getSeHandler() {
+  // Espera a que se inicie la aplicación
+  await bootstrapServer();
+  if (!seHandler) {
+    // Crea el handler a partir de la aplicación Express
+    seHandler = serverlessExpress({ app: expressApp });
+  }
+  return seHandler;
+}
+
 export default async function handler(event: any, context: any) {
   try {
-    const srv = await bootstrapServer();
     const sanitizedEvent = sanitizeEvent(event);
-    return serverlessExpress.proxy(srv, sanitizedEvent, context, 'PROMISE')
-      .promise;
+    const se = await getSeHandler();
+    // Llama al handler devuelto por serverlessExpress con el evento y el contexto
+    return se(sanitizedEvent, context);
   } catch (error) {
     console.error('Handler error:', error);
     throw error;
