@@ -14,15 +14,13 @@ async function bootstrapServer(): Promise<Server> {
       AppModule,
       new ExpressAdapter(expressApp),
     );
-    // Opcional: configura pipes globales, middlewares, etc.
     await app.init();
-    // Crea el servidor serverless usando aws-serverless-express
     server = createServer(expressApp);
   }
   return server;
 }
 
-export async function handler(event: any, context: any) {
+export default async function handler(event: any, context: any) {
   try {
     const srv = await bootstrapServer();
     return proxy(srv, event, context, 'PROMISE').promise;
