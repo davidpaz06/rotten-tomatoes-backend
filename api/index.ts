@@ -26,10 +26,19 @@ async function bootstrapServer(): Promise<Server> {
   return server;
 }
 
+function sanitizeEvent(event: any) {
+  if (event && event.requestContext && event.requestContext.connectionContext) {
+    delete event.requestContext.connectionContext;
+  }
+  return event;
+}
+
 export default async function handler(event: any, context: any) {
   try {
     const srv = await bootstrapServer();
-    return serverlessExpress.proxy(srv, event, context, 'PROMISE').promise;
+    const sanitizedEvent = sanitizeEvent(event);
+    return serverlessExpress.proxy(srv, sanitizedEvent, context, 'PROMISE')
+      .promise;
   } catch (error) {
     console.error('Handler error:', error);
     throw error;
