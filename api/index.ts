@@ -8,14 +8,19 @@ import { Server } from 'http';
 const expressApp = express();
 let server: Server | undefined;
 
+// filepath: /.../api/index.ts
 async function bootstrapServer(): Promise<Server> {
   if (!server) {
+    console.log('Inicializando NestJS...');
     const app = await NestFactory.create(
       AppModule,
       new ExpressAdapter(expressApp),
     );
+    console.log('NestJS creado, inicializando app...');
     await app.init();
+    console.log('App inicializada, creando servidor...');
     server = createServer(expressApp);
+    console.log('Servidor creado');
   }
   return server;
 }
