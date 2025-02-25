@@ -3,11 +3,12 @@ import { ExpressAdapter } from '@nestjs/platform-express';
 import express from 'express';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../src/app.module';
+import { Server } from 'http';
 
 const expressApp = express();
-let server: any;
+let server: Server | undefined;
 
-async function bootstrapServer() {
+async function bootstrapServer(): Promise<Server> {
   if (!server) {
     const app = await NestFactory.create(
       AppModule,
@@ -22,6 +23,11 @@ async function bootstrapServer() {
 }
 
 export async function handler(event: any, context: any) {
-  const srv = await bootstrapServer();
-  return proxy(srv, event, context, 'PROMISE').promise;
+  try {
+    const srv = await bootstrapServer();
+    return proxy(srv, event, context, 'PROMISE').promise;
+  } catch (error) {
+    console.error('Handler error:', error);
+    throw error;
+  }
 }
