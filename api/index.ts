@@ -41,19 +41,32 @@ function sanitizeEvent(event: Event) {
 
 // Transforma el evento para que tenga las propiedades mínimas que se esperan (como httpMethod y path)
 function transformEvent(event: any) {
-  // Si el evento ya tiene httpMethod y path, lo dejamos
-  if (!event.httpMethod && event.method) {
-    event.httpMethod = event.method;
+  // Asegura que httpMethod exista; si no, usa event.method o "GET"
+  if (!event.httpMethod) {
+    event.httpMethod = event.method || 'GET';
   }
-  if (!event.path && event.url) {
-    event.path = event.url;
+  // Asegura que path exista; si no, usa event.url o "/" como ruta por defecto
+  if (!event.path) {
+    event.path = event.url || '/';
   }
-  if (!event.queryStringParameters && event.query) {
-    event.queryStringParameters = event.query;
+  // Asegura que queryStringParameters exista; si no, usa event.query o un objeto vacío
+  if (!event.queryStringParameters) {
+    event.queryStringParameters = event.query || {};
   }
-  // Fuerza isBase64Encoded para evitar problemas con la serialización
+  // Fuerza isBase64Encoded para evitar problemas de serialización
   if (typeof event.isBase64Encoded === 'undefined') {
     event.isBase64Encoded = false;
+  }
+  // Si no existe requestContext, lo crea
+  if (!event.requestContext) {
+    event.requestContext = {};
+  }
+  // Agrega una propiedad http con el método y ruta (simulando API Gateway v2)
+  if (!event.requestContext.http) {
+    event.requestContext.http = {
+      method: event.httpMethod,
+      path: event.path,
+    };
   }
   return event;
 }
