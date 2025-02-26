@@ -39,11 +39,28 @@ function sanitizeEvent(event: Event) {
   return event;
 }
 
+// Transforma el evento para que tenga las propiedades mínimas que se esperan (como httpMethod y path)
+function transformEvent(event: any) {
+  // Si el evento ya tiene httpMethod y path, lo dejamos
+  if (!event.httpMethod && event.method) {
+    event.httpMethod = event.method;
+  }
+  if (!event.path && event.url) {
+    event.path = event.url;
+  }
+  if (!event.queryStringParameters && event.query) {
+    event.queryStringParameters = event.query;
+  }
+  // Fuerza isBase64Encoded para evitar problemas con la serialización
+  if (typeof event.isBase64Encoded === 'undefined') {
+    event.isBase64Encoded = false;
+  }
+  return event;
+}
+
 async function getSeHandler() {
-  // Espera a que se inicie la aplicación
   await bootstrapServer();
   if (!seHandler) {
-    // Crea el handler a partir de la aplicación Express
     seHandler = serverlessExpress({ app: expressApp });
   }
   return seHandler;
@@ -51,9 +68,9 @@ async function getSeHandler() {
 
 export default async function handler(event: any, context: any) {
   try {
-    const sanitizedEvent = sanitizeEvent(event);
+    const transformedEvent = transformEvent(event);
+    const sanitizedEvent = sanitizeEvent(transformedEvent);
     const se = await getSeHandler();
-    // Llama al handler devuelto por serverlessExpress con el evento y el contexto
     return se(sanitizedEvent, context);
   } catch (error) {
     console.error('Handler error:', error);
