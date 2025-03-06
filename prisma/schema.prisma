@@ -1,0 +1,77 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  user_id   Int      @id @default(autoincrement())
+  username  String
+  password  String
+  Comment   Comment[]
+  User_Movie User_Movie[]
+  Rating    Rating[]
+}
+
+model Movie {
+  movie_id       Int         @id @default(autoincrement())
+  movie_name     String
+  movie_director String?
+  movie_date     DateTime?
+  movie_category String?
+  movie_length   Int?
+  Comment        Comment[]
+  User_Movie     User_Movie[]
+  Movie_Actor    Movie_Actor[]
+  Rating         Rating[]
+}
+
+model Actor {
+  actor_id   Int         @id @default(autoincrement())
+  actor_name String
+  Movie_Actor Movie_Actor[]
+}
+
+model Comment {
+  comment_id   Int      @id @default(autoincrement())
+  user_id      Int
+  movie_id     Int
+  comment_text String
+  User         User     @relation(fields: [user_id], references: [user_id])
+  Movie        Movie    @relation(fields: [movie_id], references: [movie_id])
+}
+
+model User_Movie {
+  user_movie_id Int   @id @default(autoincrement())
+  user_id       Int
+  movie_id      Int
+  User          User  @relation(fields: [user_id], references: [user_id])
+  Movie         Movie @relation(fields: [movie_id], references: [movie_id])
+}
+
+model Movie_Actor {
+  movie_actor_id Int   @id @default(autoincrement())
+  movie_id       Int
+  actor_id       Int
+  Movie          Movie @relation(fields: [movie_id], references: [movie_id])
+  Actor          Actor @relation(fields: [actor_id], references: [actor_id])
+}
+
+model Rating {
+  rating_id    Int     @id @default(autoincrement())
+  user_id      Int
+  movie_id     Int
+  rating_score Float
+  User         User    @relation(fields: [user_id], references: [user_id])
+  Movie        Movie   @relation(fields: [movie_id], references: [movie_id])
+}
+
